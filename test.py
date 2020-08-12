@@ -1,7 +1,7 @@
 import gym
 import gym_ssl
 
-env = gym.make('grSimSSL-v0')
+env = gym.make('grSimSSLPenalty-v0')
 
 env.reset()
 for i in range(1):

@@ -6,7 +6,7 @@ import gym_ssl.grsim_ssl.pb.grSim_Packet_pb2 as packet_pb2
 from gym_ssl.grsim_ssl.grSimClient import grSimClient
 
 
-class GrSimSSLEnv(gym.Env):
+class GrSimSSLPenaltyEnv(gym.Env):
     """
     Using cartpole env description as base example for our documentation
     Description:
@@ -19,18 +19,24 @@ class GrSimSSLEnv(gym.Env):
         described by Barto, Sutton, and Anderson
     Observation:
         Type: Box(3)
-        Num     Observation                  Min                     Max
-        0       Ball X       -Inf                    Inf
-        1       Ball Y       -Inf                    Inf
-        2       Ball Vx   -3.1416                 3.1416
-        3       Ball Vy       -Inf                    Inf
+        Num     Observation                     Min                     Max
+        0       Ball X   (cm)                   -700                    700
+        1       Ball Y   (cm)                   -600                    600
+        2       Ball Vx  (cm/s)                 -1000                   1000
+        3       Ball Vy  (cm/s)                 -1000                   1000
+        4       id 0 Blue Robot Y       (cm)    -600                    600
+        5       id 0 Blue Robot Vy      (cm/s)  -1000                   1000
+        6       id 0 Yellow Robot X     (cm)    -700                    700
+        7       id 0 Yellow Robot Y     (cm)    -600                    600
+        8       id 0 Yellow Robot Vx    (cm/s)  -1000                   1000
+        9       id 0 Yellow Robot Vy    (cm/s)  -1000                   1000
+        10      id 0 Yellow Robot Angle (rad)   -math.pi                math.pi
 
     Actions:
-        Type: Box(3)
+        Type: Box(1)
         Num     Action                        Min                     Max
-        0       id 0 Blue Team Robot Vx       -1                      1
-        1       id 0 Blue Team Robot Vy       -1                      1
-        2       id 0 Blue Team Robot Omega    -1                      1
+        0       id 0 Blue Team Robot Vy       -1                      1
+
         Note: The amount the velocity that is reduced or increased is not
         fixed; it depends on the angle the pole is pointing. This is because
         the center of gravity of the pole increases the amount of energy needed
@@ -52,10 +58,9 @@ class GrSimSSLEnv(gym.Env):
     def __init__(self):
         self.client = grSimClient()
 
-        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(3,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
         # Observation Space thresholds
-        obsSpaceThresholds = np.array([np.finfo(np.float32).max,
-                                       np.finfo(np.float32).max,
+        obsSpaceThresholds = np.array([700, 600, 1000, 1000, 600, 1000, 700, 600, 100,
                                        math.pi], dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=-obsSpaceThresholds, high=obsSpaceThresholds)
 
@@ -90,9 +95,9 @@ class GrSimSSLEnv(gym.Env):
         robot.id = 0
         robot.kickspeedx = 0
         robot.kickspeedz = 0
-        robot.veltangent = actions[0]
-        robot.velnormal = actions[1]
-        robot.velangular = actions[2]
+        robot.veltangent = 0
+        robot.velnormal = actions[0]
+        robot.velangular = 0
         robot.spinner = False
         robot.wheelsspeed = False
 
