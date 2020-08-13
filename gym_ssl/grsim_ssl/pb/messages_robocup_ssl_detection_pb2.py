@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=_b('\n$messages_robocup_ssl_detection.proto\"x\n\x11SSL_DetectionBall\x12\x12\n\nconfidence\x18\x01 \x02(\x02\x12\x0c\n\x04\x61rea\x18\x02 \x01(\r\x12\t\n\x01x\x18\x03 \x02(\x02\x12\t\n\x01y\x18\x04 \x02(\x02\x12\t\n\x01z\x18\x05 \x01(\x02\x12\x0f\n\x07pixel_x\x18\x06 \x02(\x02\x12\x0f\n\x07pixel_y\x18\x07 \x02(\x02\"\x97\x01\n\x12SSL_DetectionRobot\x12\x12\n\nconfidence\x18\x01 \x02(\x02\x12\x10\n\x08robot_id\x18\x02 \x01(\r\x12\t\n\x01x\x18\x03 \x02(\x02\x12\t\n\x01y\x18\x04 \x02(\x02\x12\x13\n\x0borientation\x18\x05 \x01(\x02\x12\x0f\n\x07pixel_x\x18\x06 \x02(\x02\x12\x0f\n\x07pixel_y\x18\x07 \x02(\x02\x12\x0e\n\x06height\x18\x08 \x01(\x02\"\xd9\x01\n\x12SSL_DetectionFrame\x12\x14\n\x0c\x66rame_number\x18\x01 \x02(\r\x12\x11\n\tt_capture\x18\x02 \x02(\x01\x12\x0e\n\x06t_sent\x18\x03 \x02(\x01\x12\x11\n\tcamera_id\x18\x04 \x02(\r\x12!\n\x05\x62\x61lls\x18\x05 \x03(\x0b\x32\x12.SSL_DetectionBall\x12*\n\rrobots_yellow\x18\x06 \x03(\x0b\x32\x13.SSL_DetectionRobot\x12(\n\x0brobots_blue\x18\x07 \x03(\x0b\x32\x13.SSL_DetectionRobot')
+  serialized_pb=_b('\n$messages_robocup_ssl_detection.proto\"\x9c\x01\n\x11SSL_DetectionBall\x12\x12\n\nconfidence\x18\x01 \x02(\x02\x12\x0c\n\x04\x61rea\x18\x02 \x01(\r\x12\t\n\x01x\x18\x03 \x02(\x02\x12\t\n\x01y\x18\x04 \x02(\x02\x12\t\n\x01z\x18\x05 \x01(\x02\x12\x0f\n\x07pixel_x\x18\x06 \x02(\x02\x12\x0f\n\x07pixel_y\x18\x07 \x02(\x02\x12\n\n\x02vx\x18\x08 \x02(\x02\x12\n\n\x02vy\x18\t \x02(\x02\x12\n\n\x02vz\x18\n \x02(\x02\"\xc5\x01\n\x12SSL_DetectionRobot\x12\x12\n\nconfidence\x18\x01 \x02(\x02\x12\x10\n\x08robot_id\x18\x02 \x01(\r\x12\t\n\x01x\x18\x03 \x02(\x02\x12\t\n\x01y\x18\x04 \x02(\x02\x12\x13\n\x0borientation\x18\x05 \x01(\x02\x12\x0f\n\x07pixel_x\x18\x06 \x02(\x02\x12\x0f\n\x07pixel_y\x18\x07 \x02(\x02\x12\x0e\n\x06height\x18\x08 \x01(\x02\x12\n\n\x02vx\x18\t \x02(\x02\x12\n\n\x02vy\x18\n \x02(\x02\x12\x14\n\x0cvorientation\x18\x0b \x02(\x02\"\xd9\x01\n\x12SSL_DetectionFrame\x12\x14\n\x0c\x66rame_number\x18\x01 \x02(\r\x12\x11\n\tt_capture\x18\x02 \x02(\x01\x12\x0e\n\x06t_sent\x18\x03 \x02(\x01\x12\x11\n\tcamera_id\x18\x04 \x02(\r\x12!\n\x05\x62\x61lls\x18\x05 \x03(\x0b\x32\x12.SSL_DetectionBall\x12*\n\rrobots_yellow\x18\x06 \x03(\x0b\x32\x13.SSL_DetectionRobot\x12(\n\x0brobots_blue\x18\x07 \x03(\x0b\x32\x13.SSL_DetectionRobot')
 )
 
 
@@ -81,6 +81,27 @@ _SSL_DETECTIONBALL = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='vx', full_name='SSL_DetectionBall.vx', index=7,
+      number=8, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='vy', full_name='SSL_DetectionBall.vy', index=8,
+      number=9, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='vz', full_name='SSL_DetectionBall.vz', index=9,
+      number=10, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -93,8 +114,8 @@ _SSL_DETECTIONBALL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=40,
-  serialized_end=160,
+  serialized_start=41,
+  serialized_end=197,
 )
 
 
@@ -161,6 +182,27 @@ _SSL_DETECTIONROBOT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='vx', full_name='SSL_DetectionRobot.vx', index=8,
+      number=9, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='vy', full_name='SSL_DetectionRobot.vy', index=9,
+      number=10, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='vorientation', full_name='SSL_DetectionRobot.vorientation', index=10,
+      number=11, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -173,8 +215,8 @@ _SSL_DETECTIONROBOT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=163,
-  serialized_end=314,
+  serialized_start=200,
+  serialized_end=397,
 )
 
 
@@ -246,8 +288,8 @@ _SSL_DETECTIONFRAME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=317,
-  serialized_end=534,
+  serialized_start=400,
+  serialized_end=617,
 )
 
 _SSL_DETECTIONFRAME.fields_by_name['balls'].message_type = _SSL_DETECTIONBALL
