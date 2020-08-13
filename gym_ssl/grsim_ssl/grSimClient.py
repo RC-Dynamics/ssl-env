@@ -5,7 +5,7 @@ import gym_ssl.grsim_ssl.pb.grSim_Packet_pb2 as packet_pb2
 
 class grSimClient:
 
-    def __init__(self, ip='224.0.0.1', visionPort=10020, commandPort=20011):
+    def __init__(self, ip='127.0.0.1', visionPort=10020, commandPort=20011):
         """Init grSimClient object."""
 
         self.ip = ip

@@ -31,7 +31,7 @@ class GrSimSSLPenaltyEnv(gym.Env):
         8       id 0 Yellow Robot Angle (rad)       -math.pi                math.pi
         9       id 0 Yellow Robot Vx    (mm/s)      -10000                  10000
         10      id 0 Yellow Robot Vy    (mm/s)      -10000                  10000
-        10      id 0 Yellow Robot Vy    (rad/s)     -math.pi * 3            math.pi * 3
+        11      id 0 Yellow Robot Vy    (rad/s)     -math.pi * 3            math.pi * 3
 
     Actions:
         Type: Box(1)
@@ -76,9 +76,38 @@ class GrSimSSLPenaltyEnv(gym.Env):
         visionData = self.client.receive()
         state = self._parseVision(visionData)
 
-        return state, 0, False, {}
+        reward, done = self._calculateRewards(visionData)
+
+        return state, reward, done, {}
 
     def reset(self):
+        # Generate replacement packet
+        packet = packet_pb2.grSim_Packet()
+        replacement = packet.replacement
+        # Ball penalty position
+        ball = replacement.ball
+        ball.x = -4.8
+        ball.y = 0
+        ball.vx = 0
+        ball.vy = 0
+
+        # Goalkeeper penalty position
+        goalKeeper = replacement.robots.add()
+        goalKeeper.x = -6
+        goalKeeper.y = 0
+        goalKeeper.dir = 0
+        goalKeeper.id = 0
+        goalKeeper.yellowteam = False
+
+        # Kicker penalty position
+        attacker = replacement.robots.add()
+        attacker.x = -4 
+        attacker.y = 0
+        attacker.dir = 180
+        attacker.id = 0
+        attacker.yellowteam = True
+
+        self.client.send(packet)
         print('Environment reset')
 
     def _generateCommandPacket(self, actions):
@@ -116,3 +145,7 @@ class GrSimSSLPenaltyEnv(gym.Env):
         space[11] = data.detection.robots_yellow[0].vorientation
 
         return space
+
+    # TODO
+    def _calculateRewards(self, data):
+        return 0, False
