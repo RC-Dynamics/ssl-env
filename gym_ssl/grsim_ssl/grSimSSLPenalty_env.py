@@ -19,18 +19,19 @@ class GrSimSSLPenaltyEnv(gym.Env):
         described by Barto, Sutton, and Anderson
     Observation:
         Type: Box(3)
-        Num     Observation                     Min                     Max
-        0       Ball X   (cm)                   -700                    700
-        1       Ball Y   (cm)                   -600                    600
-        2       Ball Vx  (cm/s)                 -1000                   1000
-        3       Ball Vy  (cm/s)                 -1000                   1000
-        4       id 0 Blue Robot Y       (cm)    -600                    600
-        5       id 0 Blue Robot Vy      (cm/s)  -1000                   1000
-        6       id 0 Yellow Robot X     (cm)    -700                    700
-        7       id 0 Yellow Robot Y     (cm)    -600                    600
-        8       id 0 Yellow Robot Vx    (cm/s)  -1000                   1000
-        9       id 0 Yellow Robot Vy    (cm/s)  -1000                   1000
-        10      id 0 Yellow Robot Angle (rad)   -math.pi                math.pi
+        Num     Observation                         Min                     Max
+        0       Ball X   (mm)                       -7000                   7000
+        1       Ball Y   (mm)                       -6000                   6000
+        2       Ball Vx  (mm/s)                     -10000                  10000
+        3       Ball Vy  (mm/s)                     -10000                  10000
+        4       id 0 Blue Robot Y       (mm)        -6000                   6000
+        5       id 0 Blue Robot Vy      (mm/s)      -10000                  10000
+        6       id 0 Yellow Robot X     (mm)        -7000                   7000
+        7       id 0 Yellow Robot Y     (mm)        -6000                   6000
+        8       id 0 Yellow Robot Angle (rad)       -math.pi                math.pi
+        9       id 0 Yellow Robot Vx    (mm/s)      -10000                  10000
+        10      id 0 Yellow Robot Vy    (mm/s)      -10000                  10000
+        10      id 0 Yellow Robot Vy    (rad/s)     -math.pi * 3            math.pi * 3
 
     Actions:
         Type: Box(1)
@@ -60,8 +61,8 @@ class GrSimSSLPenaltyEnv(gym.Env):
 
         self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
         # Observation Space thresholds
-        obsSpaceThresholds = np.array([700, 600, 1000, 1000, 600, 1000, 700, 600, 100,
-                                       math.pi], dtype=np.float32)
+        obsSpaceThresholds = np.array([7000, 6000, 10000, 10000, 6000, 10000, 7000,
+                                       math.pi, 6000, 1000, math.pi * 3], dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=-obsSpaceThresholds, high=obsSpaceThresholds)
 
         print('Environment initialized')
@@ -72,14 +73,10 @@ class GrSimSSLPenaltyEnv(gym.Env):
         # Send command Packet
         self.client.send(packet)
 
-        data = self.client.receive()
-        while 0 not in [robot.robot_id for robot in data.detection.robots_blue]:
-            data = self.client.receive()
+        visionData = self.client.receive()
+        state = self._parseVision(visionData)
 
-        for robot in data.detection.robots_blue:
-            if robot.robot_id == 0:
-                observation = np.array([robot.x, robot.y, robot.orientation], dtype=np.float32)
-        return observation, 0, False, {}
+        return state, 0, False, {}
 
     def reset(self):
         print('Environment reset')
@@ -102,3 +99,20 @@ class GrSimSSLPenaltyEnv(gym.Env):
         robot.wheelsspeed = False
 
         return packet
+
+    def _parseVision(self, data):
+        space = np.zeros(12)
+        space[0] = data.detection.balls[0].x
+        space[1] = data.detection.balls[0].y
+        space[2] = data.detection.balls[0].vx
+        space[3] = data.detection.balls[0].vy
+        space[4] = data.detection.robots_blue[0].y
+        space[5] = data.detection.robots_blue[0].vy
+        space[6] = data.detection.robots_yellow[0].x
+        space[7] = data.detection.robots_yellow[0].y
+        space[8] = data.detection.robots_yellow[0].orientation
+        space[9] = data.detection.robots_yellow[0].vx
+        space[10] = data.detection.robots_yellow[0].vy
+        space[11] = data.detection.robots_yellow[0].vorientation
+
+        return space
