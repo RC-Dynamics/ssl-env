@@ -69,6 +69,7 @@ class goalieEnv(GrSimSSLEnv):
         self.observation_space = gym.spaces.Box(low=-obsSpaceThresholds, high=obsSpaceThresholds)
         self.goalieState = None
         self.target_bally = 0
+        self.start = time.time()
 
         print('Environment initialized')
 
@@ -86,12 +87,6 @@ class goalieEnv(GrSimSSLEnv):
         #commands.append(ball)
         return commands
 
-    def reset(self):
-        # Remove ball from Robot
-        self.client.sendCommandsPacket([Robot(yellow=False, id = 0, kickVx=3), Robot(yellow=True, id = 0, kickVx=3)]) 
-        self.client.receiveState()
-        return super().reset()
-
     def _parseObservationFromState(self):
         observation = []
 
@@ -104,6 +99,7 @@ class goalieEnv(GrSimSSLEnv):
         # Remove ball from Robot
         self.client.sendCommandsPacket([Robot(yellow=False, id = 0, kickVx=0), Robot(yellow=True, id = 0, kickVx=3)]) 
         self.client.receiveState()
+        self.start = time.time()
         
         return super().reset()
 
@@ -156,6 +152,10 @@ class goalieEnv(GrSimSSLEnv):
         reward = 0
         done = False
         
+        # GK out of big area
+        if self.state.robotsBlue[0].x > -4800 or abs(self.state.robotsBlue[0].y) > 1200:
+            reward -= 0.01
+            
         # GK control the ball
         if self.goalieState.robot_ball_dist < 120 and abs(self.goalieState.angle_relative)<0.5:    
             done = True
@@ -163,7 +163,7 @@ class goalieEnv(GrSimSSLEnv):
             return reward, done
         
         # the ball out the field limits
-        if self.state.ball.x < -6000:
+        elif self.state.ball.x < -6000:
             done = True
           
             # ball entered the goal
@@ -173,14 +173,17 @@ class goalieEnv(GrSimSSLEnv):
             # ball wrong or gk defender 
             else:
                 reward =  1
-
-        # todo reward if catch or timeout
         
         # If ball is moving away from goal after attacker kick NOT GOAL
-        if self.state.ball.x < -5000:
+        elif self.state.ball.x < -5000:
             if self.state.ball.vx > 0:
                 done = True
                 reward = 1
+                
+        # timeout and not goal
+        elif time.time() - self.start > 30:
+            done = True
+            reward = 1
                 
 
         return reward, done
