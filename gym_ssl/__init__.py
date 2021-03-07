@@ -11,3 +11,7 @@ register(id='grSimSSLShootGoalie-v0',
 register(id='grSimSSLGoToBall-v0',
     entry_point='gym_ssl.grsim_ssl:goToBallEnv'
     )
+
+register(id='grSimSSLGK-v0',
+    entry_point='gym_ssl.grsim_ssl:goalieEnv'
+    )
