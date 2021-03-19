@@ -4,14 +4,19 @@ import numpy as np
 import os
 import sys
 import time
+import datetime
+from tqdm import tqdm
+from glob import glob
+import argparse
 
+from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import torch.optim as optim
 import torch.nn as nn
 import torch
 
 from agents.Utils.Normalization import NormalizedWrapper
-from agents.Utils.Networks import ValueNetwork, PolicyNetwork
+from agents.Utils.Networks import DDPGValueNetwork, DDPGPolicyNetwork
 from agents.Utils.OUNoise import OUNoise
 from agents.Utils.Buffers import ReplayBuffer, AverageBuffer
 
@@ -19,21 +24,26 @@ from agents.Utils.Buffers import ReplayBuffer, AverageBuffer
 class AgentDDPG:
 
     def __init__(self, name='DDPG',
-                 maxEpisodes=60000, maxSteps=150, batchSize=256, replayBufferSize=200000, valueLR=1e-3, policyLR=1e-4,
-                 hiddenDim=256, nEpisodesPerCheckpoint=5000):
+                 maxEpisodes=60001, maxSteps=150, batchSize=256, replayBufferSize=1_000_000, valueLR=1e-3, policyLR=1e-4,
+                 hiddenDim=256, nEpisodesPerCheckpoint=5000, ckpt_stem='checkpoint', env_str="grSimSSLShootGoalie-v01"):
         # Training Parameters
-        self.batchSize = batchSize
-        self.maxSteps = maxSteps
+        self.batchSize   = batchSize
+        self.maxSteps    = maxSteps
         self.maxEpisodes = maxEpisodes
         self.nEpisodesPerCheckpoint = nEpisodesPerCheckpoint
         self.nEpisodes = 0
+        self.ckpt_stem = r'/' + ckpt_stem
+        self.name = name
+        self.env_str = env_str
 
         # Check if cuda gpu is available, and select it
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print('Cuda Activated? ', torch.cuda.is_available())
+        #print('Cuda Activated? ', torch.cuda.is_available())
             
         # Create Environment using a wrapper which scales actions and observations to [-1, 1]
-        self.env = NormalizedWrapper(gym.make("grSimSSLShootGoalie-v0"))
+
+        #  sparce_reward: True, move_goalie: True}
+        self.env = NormalizedWrapper(gym.make(env_str))
 
         # Init action noise object
         self.ouNoise = OUNoise(self.env.action_space)
@@ -41,10 +51,10 @@ class AgentDDPG:
         # Init networks
         stateDim = self.env.observation_space.shape[0]
         actionDim = self.env.action_space.shape[0]
-        self.valueNet = ValueNetwork(stateDim, actionDim, hiddenDim).to(self.device)
-        self.policyNet = PolicyNetwork(stateDim, actionDim, hiddenDim, device=self.device).to(self.device)
-        self.targetValueNet = ValueNetwork(stateDim, actionDim, hiddenDim).to(self.device)
-        self.targetPolicyNet = PolicyNetwork(stateDim, actionDim, hiddenDim, device=self.device).to(self.device)
+        self.valueNet = DDPGValueNetwork(stateDim, actionDim, hiddenDim).to(self.device)
+        self.policyNet = DDPGPolicyNetwork(stateDim, actionDim, hiddenDim, device=self.device).to(self.device)
+        self.targetValueNet = DDPGValueNetwork(stateDim, actionDim, hiddenDim).to(self.device)
+        self.targetPolicyNet = DDPGPolicyNetwork(stateDim, actionDim, hiddenDim, device=self.device).to(self.device)
         # Same initial parameters for target networks
         for target_param, param in zip(self.targetValueNet.parameters(), self.valueNet.parameters()):
             target_param.data.copy_(param.data)
@@ -118,7 +128,7 @@ class AgentDDPG:
 
     # Training Loop
     def train(self):
-        while self.nEpisodes < self.maxEpisodes:
+        for self.nEpisodes in tqdm(range(self.maxEpisodes)):
             state = self.env.reset()
             self.ouNoise.reset()
             episodeReward = 0
@@ -148,8 +158,6 @@ class AgentDDPG:
                 stepSeg = nStepsInEpisode/(time.time() - self.startTimeInEpisode)
 
             self.rewardsBuffer.push(episodeReward)
-            self.nEpisodes += 1
-
             # TODO trocar por lista circular
             # rewards.append(episodeReward)
 
@@ -159,30 +167,67 @@ class AgentDDPG:
             self.writer.add_scalar('Train/Steps_seconds',stepSeg, self.nEpisodes)
             self.writer.add_scalar('Train/Reward_average_on_{}_previous_episodes'.format(self.rewardsBuffer.capacity), self.rewardsBuffer.average(), self.nEpisodes)
 
-            if (self.nEpisodes % self.nEpisodesPerCheckpoint) == 0:
+            if (((self.nEpisodes) % self.nEpisodesPerCheckpoint) == 0) and (self.nEpisodes != 0):
                 self._save()
 
         self.writer.flush()
 
     # Playing loop
     def play(self):
+        steps_hist  = []
+        rewards     = [] 
+        infer_times = []
+        n_iter      = 1000
+        logger_file_name = 'logger_result2.txt'
         if self.loadedModel:
-            while True:
+            for run in tqdm(range(n_iter)):
                 done = False
                 obs = self.env.reset()
+                time.sleep(0.005)
                 steps = 0
+                infer_time = []
                 while not done and steps < self.maxSteps:
                     steps += 1
+                    start_time = time.time()
                     action = self.policyNet.get_action(obs)
+                    end_time   = time.time()
                     obs, reward, done, _ = self.env.step(action)
-                time.sleep(0.1)
+                    infer_time.append(end_time - start_time)
+                steps_hist.append(steps)
+                rewards.append(reward)
+                infer_time.append(np.array(infer_time).mean())
+            
+            infer_time = np.array(infer_time)
+            steps_hist = np.array(steps_hist)
+            header   = "env,run, n, mean steps, std steps, mean time, std time, N goals\n"
+            save_str = f"{self.env_str},{self.name},{self.ckpt_stem},{n_iter},{steps_hist.mean()}, {steps_hist.std()}, {infer_time.mean()}, {infer_time.std()},"
+            id_unique, freq = np.unique(rewards, return_counts=True)
+            if 2 in id_unique:
+                val = freq[np.where(id_unique==2)[0][0]]
+            else:
+                print("No goal?")
+                val = 0
+                
+            save_str += f"{val},"
+
+            write_header = not Path(logger_file_name).exists()
+
+            with open(logger_file_name, 'a') as f:
+                if write_header:
+                    f.write(header)
+                f.write(save_str+'\n')
+
+            print(write_header, '\n', header)
+            print(save_str)
+                
         else:
             print("Correct usage: python train.py {name} (play | train) [-cs]")
 
     def _load(self):
         # Check if checkpoint file exists
-        if os.path.exists(self.path + '/checkpoint'):
-            checkpoint = torch.load(self.path + '/checkpoint', map_location=self.device)
+        
+        if os.path.exists(self.path + self.ckpt_stem):
+            checkpoint = torch.load(self.path + self.ckpt_stem, map_location=self.device)
             # Load networks parameters checkpoint
             self.valueNet.load_state_dict(checkpoint['valueNetDict'])
             self.policyNet.load_state_dict(checkpoint['policyNetDict'])
@@ -193,7 +238,7 @@ class AgentDDPG:
             print("Checkpoint with {} episodes successfully loaded".format(self.nEpisodes))
             return True
         else:
-            print("- No checkpoint " + self.path + '/checkpoint' + " loaded!")
+            print("- No checkpoint " + self.path + self.ckpt_stem + " loaded!")
             return False
 
     def _save(self):
@@ -218,19 +263,45 @@ class AgentDDPG:
             'rewardsBuffer': self.rewardsBuffer.state_dict()
         }, self.path + '/checkpoint_' + str(self.nEpisodes))
 
+def arg_parser():
+    """Arg parser"""    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--name', type=str,
+                        default='DDPG_0000', help='exp name')
+    parser.add_argument('-f', '--funct', type=str,
+                        default='train', help='train | play | full-play')
+    parser.add_argument('-e', '--env', type=str,
+                        default='grSimSSLShootGoalie-v01',
+                        help='path to dataset')
+
+    return parser
 
 if __name__ == '__main__':
-    try:
-        if len(sys.argv) >= 3:
-            agent = AgentDDPG(name=sys.argv[1])
-            if sys.argv[2] == 'play':
-                agent.play()
-            elif sys.argv[2] == 'train':
-                agent.train()
-            else:
-                print("correct usage: python train.py {name} (play | train) [-cs]")
-        else:
-            print("correct usage: python train.py {name} (play | train) [-cs]")
-    except KeyboardInterrupt:
-        if len(sys.argv) >= 4 and sys.argv[3] == '-cs':
-            agent._save()
+    parser    = arg_parser()
+    args      = vars(parser.parse_args())
+
+    name      = args['name']
+    funct     = args['funct']
+    env       = args['env']
+    
+    print('\nArgs:')
+    [ print('\t* {}: {}'.format(k,v) ) for k,v in (args).items() ]
+
+    if funct == 'play':
+        agent = AgentDDPG(name=name, env_str=env)
+        agent.play()
+
+    if funct == 'train': 
+
+
+        agent = AgentDDPG(name=name, env_str=env)
+        agent.train()
+
+    if funct == 'full-play' or sfunct == 'train':
+
+        path = './runs/' + name
+        
+        for stem in sorted(glob(path + r'/checkpoint*')):
+            stem = Path(stem).stem
+            agent = AgentDDPG(name=name, ckpt_stem=stem, env_str=env)
+            agent.play()

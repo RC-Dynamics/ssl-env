@@ -9,3 +9,5 @@ __pycache__
 *.0
 runs/*
 agents/agentShootGoalie/rlAdventure2DDPG/runs/*
+*/runs/*
+*checkpoint*

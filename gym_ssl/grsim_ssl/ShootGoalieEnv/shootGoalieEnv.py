@@ -54,9 +54,14 @@ class shootGoalieEnv(GrSimSSLEnv):
   Episode Termination:
     # TODO
   """
-  def __init__(self):
+  def __init__(self, sparce_reward=-1, move_goalie=-1):
     super().__init__()
     ## Action Space
+    if sparce_reward == -1 or move_goalie == -1:
+      exit(-1)
+    
+    self.sparce_reward = sparce_reward 
+    self.move_goalie   = move_goalie
     actSpaceThresholds = np.array([math.pi * 3, 6.5], dtype=np.float32)
     self.action_space = gym.spaces.Box(low=-actSpaceThresholds, high=actSpaceThresholds)
 
@@ -79,17 +84,17 @@ class shootGoalieEnv(GrSimSSLEnv):
 
 
     # Moving GOALIE
-    vy = (self.state.ball.y - self.state.robotsYellow[0].y)/1000
-    if abs(vy) > 0.4:
-      vy = 0.4*(vy/abs(vy))
-    if self.state.robotsYellow[0].y > 500 and vy > 0:
-      vy = 0
-    if self.state.robotsYellow[0].y < -500 and vy < 0:
-      vy = 0
-      
-    cmdGoalie = self._getCorrectGKCommand(vy)
-    
-    commands.append(cmdGoalie)
+    if self.move_goalie:
+      vy = (self.state.ball.y - self.state.robotsYellow[0].y)/1000
+      if abs(vy) > 0.4:
+        vy = 0.4*(vy/abs(vy))
+      if self.state.robotsYellow[0].y > 500 and vy > 0:
+        vy = 0
+      if self.state.robotsYellow[0].y < -500 and vy < 0:
+        vy = 0
+        
+      cmdGoalie = self._getCorrectGKCommand(vy)
+      commands.append(cmdGoalie)
 
     return commands
 
@@ -122,7 +127,10 @@ class shootGoalieEnv(GrSimSSLEnv):
     # ball position
     ball = Ball(x=ball_x, y=ball_y, vx=0, vy=0)
     # Goalkeeper position
-    goalkeeper_y = random.randrange(-5, 5, 1)/10
+    if self.move_goalie:
+      goalkeeper_y = random.randrange(-5, 5, 1)/10
+    else:
+      goalkeeper_y = 0
     goalKeeper = Robot(id=0, x=-6, y=goalkeeper_y, theta=0, yellow = True)
     # Kicker position
     attacker = Robot(id=0, x=attacker_x, y=attacker_y, theta=robot_theta, yellow = False)
@@ -161,7 +169,10 @@ class shootGoalieEnv(GrSimSSLEnv):
     return reward, done
 
   def _penalizeRewardFunction(self):
-    reward = -0.01
+    if self.sparce_reward:
+      reward = 0
+    else:
+      reward = -0.01
     done = False
     if self.state.ball.x < -6000:
       # the ball out the field limits
