@@ -199,7 +199,7 @@ class AgentDDPG:
             
             infer_time = np.array(infer_time)
             steps_hist = np.array(steps_hist)
-            header   = "env,run, n, mean steps, std steps, mean time, std time, N goals\n"
+            header   = "env,run,ckpt, n, mean steps, std steps, mean time, std time, N goals\n"
             save_str = f"{self.env_str},{self.name},{self.ckpt_stem},{n_iter},{steps_hist.mean()}, {steps_hist.std()}, {infer_time.mean()}, {infer_time.std()},"
             id_unique, freq = np.unique(rewards, return_counts=True)
             if 2 in id_unique:
@@ -297,7 +297,7 @@ if __name__ == '__main__':
         agent = AgentDDPG(name=name, env_str=env)
         agent.train()
 
-    if funct == 'full-play' or sfunct == 'train':
+    if funct == 'full-play' or funct == 'train':
 
         path = './runs/' + name
         
