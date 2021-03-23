@@ -24,6 +24,11 @@ register(id='grSimSSLShootGoalie-v10',
     kwargs={'sparce_reward': False, "move_goalie": False}
     )
 
+register(id='grSimSSLPass-v0',
+    entry_point='gym_ssl.grsim_ssl:passEnv',
+    kwargs={}
+    )
+
 
 register(id='grSimSSLGoToBall-v0',
     entry_point='gym_ssl.grsim_ssl:goToBallEnv'
