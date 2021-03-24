@@ -65,6 +65,7 @@ class passEnv(GrSimSSLEnv):
     self.passState = None
     self.min_dist = 500_000
     self.goalieState = 0
+    self.good_reward = [1, 2, 5, 10]
 
     print('Environment initialized')
   
@@ -86,8 +87,8 @@ class passEnv(GrSimSSLEnv):
 
   def reset(self):
     # Remove ball from Robot
-    self.client.sendCommandsPacket([Robot(yellow=False, id=0, kickVx=0, dribbler=True), 
-                                    Robot(yellow=True, id=0, kickVx=3, dribbler=True)]) 
+    self.client.sendCommandsPacket([Robot(yellow=False, id=0, vw=0, kickVx=0, dribbler=True), 
+                                    Robot(yellow=True, id=0, vw=0, kickVx=0, dribbler=True)]) 
     self.client.receiveState()
     self.min_dist = 500_000
     return super().reset()
@@ -127,7 +128,7 @@ class passEnv(GrSimSSLEnv):
     dist_robot_ball_i = 120
 
     has_kick          = dist_robot_ball > dist_robot_ball_i
-    timout            = self.passState.timestamp > 9000 # 30 * 300
+    timout            = self.passState.timestamp >= 4500 # 30 * 150
     ball_more_far     = dist_ally_ball > (dist_robot_ally + 10)
     wrong_ball        = self.min_dist < dist_ally_ball
     
@@ -147,6 +148,8 @@ class passEnv(GrSimSSLEnv):
       done   = True
     
     elif (timout) or (has_kick and ball_more_far) or (has_kick and wrong_ball): 
+      if timout and not has_kick:
+        reward = -5
       if self.min_dist < 300:
         reward = 5
       elif self.min_dist < 500:
@@ -158,30 +161,9 @@ class passEnv(GrSimSSLEnv):
       else:
         reward = -5
       done   = True
+
+    if done:
+      self.info['min_dist'] = self.min_dist
     
     return reward, done
 
-
-  def _getCorrectGKCommand(self,vy):
-    '''Control goalkeeper vw and vx to keep him at goal line'''
-    cmdGoalKeeper = Robot(yellow=True, id=0, vy=vy)
-
-    # Proportional Parameters for Vx and Vw
-    KpVx = 0.0006
-    KpVw = 1
-    # Error between goal line and goalkeeper
-    errX = -6000 - self.state.robotsYellow[0].x
-    # If the error is greater than 20mm, correct the goalkeeper
-    if abs(errX) > 20:
-        cmdGoalKeeper.vx = KpVx * errX
-    else:
-        cmdGoalKeeper.vx = 0.0
-    # Error between the desired angle and goalkeeper angle
-    errW = 0.0 - self.state.robotsYellow[0].theta
-    # If the error is greater than 0.1 rad (5,73 deg), correct the goalkeeper
-    if abs(errW) > 0.1:
-        cmdGoalKeeper.vw = KpVw * errW
-    else:
-        cmdGoalKeeper.vw = 0.0
-
-    return cmdGoalKeeper
