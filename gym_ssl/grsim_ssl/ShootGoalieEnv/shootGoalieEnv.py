@@ -69,10 +69,9 @@ class shootGoalieEnv(GrSimSSLEnv):
     obsSpaceThresholds = np.array([7000, 6000, 10000, 10000, math.pi * 3, 10000, math.pi, math.pi,
                                    math.pi, math.pi, math.pi, math.pi, math.pi, math.pi, math.pi, math.pi], dtype=np.float32)
     self.observation_space = gym.spaces.Box(low=-obsSpaceThresholds, high=obsSpaceThresholds)
-    self.shootGoalieState = None
-    self.goalieState = 0
-
-    self.goalieState = 0
+    self.shootGoalieState  = None
+    self.goalieState       = 0
+    self.good_reward       = [2]
 
     print('Environment initialized')
   
@@ -98,12 +97,6 @@ class shootGoalieEnv(GrSimSSLEnv):
 
     return commands
 
-  def reset(self):
-    # Remove ball from Robot
-    self.client.sendCommandsPacket([Robot(yellow=False, id = 0, kickVx=3), Robot(yellow=True, id = 0, kickVx=3)]) 
-    self.client.receiveState()
-    return super().reset()
-
   def _parseObservationFromState(self):
     observation = []
 
@@ -114,13 +107,14 @@ class shootGoalieEnv(GrSimSSLEnv):
 
   def reset(self):
     # Remove ball from Robot
-    self.client.sendCommandsPacket([Robot(yellow=False, id = 0, kickVx=0), Robot(yellow=True, id = 0, kickVx=3)]) 
+    self.client.sendCommandsPacket([Robot(yellow=False, id=0, vw=0, kickVx=0, dribbler=True), 
+                                    Robot(yellow=True, id=0, vw=0, kickVx=3)]) 
     self.client.receiveState()
     return super().reset()
 
   def _getFormation(self):
-    attacker_x = -4
-    attacker_y = random.randrange(-20, 20, 2)/10
+    attacker_x  = -4
+    attacker_y  = random.randrange(-20, 20, 2)/10
     robot_theta = random.randrange(0, 359, 5)
     ball_x = 0.1*math.cos(math.radians(robot_theta)) + attacker_x
     ball_y = 0.1*math.sin(math.radians(robot_theta)) + attacker_y
@@ -134,13 +128,6 @@ class shootGoalieEnv(GrSimSSLEnv):
     goalKeeper = Robot(id=0, x=-6, y=goalkeeper_y, theta=0, yellow = True)
     # Kicker position
     attacker = Robot(id=0, x=attacker_x, y=attacker_y, theta=robot_theta, yellow = False)
-
-    # For fixed positions!
-    # ball = Ball(x=-4.1, y=0, vx=0, vy=0)
-    # # Goalkeeper position
-    # goalKeeper = Robot(id=0, x=-6, y=0, theta=0, yellow = True)
-    # # Kicker position
-    # attacker = Robot(id=0, x=-4, y=0, theta=180, yellow = False)
 
     return [goalKeeper, attacker], ball
     

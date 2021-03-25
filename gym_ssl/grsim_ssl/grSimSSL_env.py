@@ -8,6 +8,8 @@
 import gym
 from gym_ssl.grsim_ssl.Communication.grSimClient import grSimClient
 from gym_ssl.grsim_ssl.Entities import Robot
+import numpy as np
+import random
 
 class GrSimSSLEnv(gym.Env):
     def __init__(self):
@@ -16,6 +18,8 @@ class GrSimSSLEnv(gym.Env):
         self.observation_space = None
         self.state = None
         self.steps = 0
+        self.info  = {}
+        self.good_reward = []
 
     def step(self, action):
         self.steps += 1
@@ -30,10 +34,15 @@ class GrSimSSLEnv(gym.Env):
         observation = self._parseObservationFromState()
         reward, done = self._calculateRewardsAndDoneFlag()
 
-        return observation, reward, done, {}
+        return observation, reward, done, self.info
+
+    def set_seed(self, idx=0):
+        np.random.seed(idx)
+        random.seed(idx)
 
     def reset(self):
         self.steps = 0
+        self.info  = {}
         # Place robots on reset positions
         resetRobotPositions, resetBallPosition = self._getFormation()
         self.client.sendReplacementPacket(robotPositions=resetRobotPositions, ballPosition=resetBallPosition) 

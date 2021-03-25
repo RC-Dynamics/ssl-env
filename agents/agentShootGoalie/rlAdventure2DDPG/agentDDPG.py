@@ -128,6 +128,7 @@ class AgentDDPG:
 
     # Training Loop
     def train(self):
+        self.env.set_seed(2021)
         for self.nEpisodes in tqdm(range(self.maxEpisodes)):
             state = self.env.reset()
             self.ouNoise.reset()
@@ -139,7 +140,7 @@ class AgentDDPG:
             while nStepsInEpisode < self.maxSteps:
                 action = self.policyNet.get_action(state)
                 action = self.ouNoise.get_action(action, nStepsInEpisode)
-                next_state, reward, done, _ = self.env.step(action)
+                next_state, reward, done, info = self.env.step(action)
 
                 self.replayBuffer.push(state, action, reward, next_state, done)
                 if len(self.replayBuffer) > self.batchSize:
@@ -153,13 +154,14 @@ class AgentDDPG:
                     self.goalsBuffer.push(1 if reward > 0 else 0)
                     break   
             
-
             if nStepsInEpisode > 1:
                 stepSeg = nStepsInEpisode/(time.time() - self.startTimeInEpisode)
 
             self.rewardsBuffer.push(episodeReward)
             # TODO trocar por lista circular
             # rewards.append(episodeReward)
+            for key in info:
+                self.writer.add_scalar(f'Train/{key}', info[key], self.nEpisodes)  
 
             self.writer.add_scalar('Train/Reward', episodeReward, self.nEpisodes)
             self.writer.add_scalar('Train/Steps', nStepsInEpisode, self.nEpisodes)
@@ -178,12 +180,14 @@ class AgentDDPG:
         rewards     = [] 
         infer_times = []
         n_iter      = 1000
-        logger_file_name = 'logger_result2.txt'
+        base_idx    = 1_000_000
+        logger_file_name = 'logger_result3.txt'
         if self.loadedModel:
             for run in tqdm(range(n_iter)):
                 done = False
+                self.env.set_seed(base_idx + run)
                 obs = self.env.reset()
-                time.sleep(0.005)
+                time.sleep(0.001)
                 steps = 0
                 infer_time = []
                 while not done and steps < self.maxSteps:
@@ -199,16 +203,20 @@ class AgentDDPG:
             
             infer_time = np.array(infer_time)
             steps_hist = np.array(steps_hist)
-            header   = "env,run,ckpt, n, mean steps, std steps, mean time, std time, N goals\n"
+
+            header     = "env,run,ckpt,n,mean steps,std steps,mean time,std time,"
+            header    += ','.join(list(map(lambda x:str(x), self.env.good_reward)))
+
             save_str = f"{self.env_str},{self.name},{self.ckpt_stem},{n_iter},{steps_hist.mean()}, {steps_hist.std()}, {infer_time.mean()}, {infer_time.std()},"
             id_unique, freq = np.unique(rewards, return_counts=True)
-            if 2 in id_unique:
-                val = freq[np.where(id_unique==2)[0][0]]
-            else:
-                print("No goal?")
-                val = 0
+
+            for idx in self.env.good_reward:
+                if idx in id_unique:
+                    val = freq[np.where(id_unique==idx)[0][0]]
+                else:
+                    val = 0
                 
-            save_str += f"{val},"
+                save_str += f"{val},"
 
             write_header = not Path(logger_file_name).exists()
 
@@ -221,7 +229,7 @@ class AgentDDPG:
             print(save_str)
                 
         else:
-            print("Correct usage: python train.py {name} (play | train) [-cs]")
+            print("Model not load")
 
     def _load(self):
         # Check if checkpoint file exists
@@ -292,7 +300,6 @@ if __name__ == '__main__':
         agent.play()
 
     if funct == 'train': 
-
 
         agent = AgentDDPG(name=name, env_str=env)
         agent.train()
