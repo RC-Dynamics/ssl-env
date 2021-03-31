@@ -139,8 +139,7 @@ class AgentDDPG:
 
             while nStepsInEpisode < self.maxSteps:
                 action = self.policyNet.get_action(state)
-                action = self.ouNoise.get_action(action, nStepsInEpisode)
-                
+                action = self.ouNoise.get_action(action, nStepsInEpisode)     
                 next_state, reward, done, info = self.env.step(action)
 
                 self.replayBuffer.push(state, action, reward, next_state, done)
@@ -178,7 +177,6 @@ class AgentDDPG:
 
     # Playing loop
     def play(self):
-        
         steps_hist  = []
         rewards     = [] 
         infer_times = []
@@ -187,11 +185,10 @@ class AgentDDPG:
         logger_file_name = 'logger_result2.txt'
         if self.loadedModel:
             for run in tqdm(range(n_iter)):
-
                 done = False
                 self.env.set_seed(base_idx + run)
                 obs = self.env.reset()
-                time.sleep(0.005)
+                time.sleep(0.001)
                 steps = 0
                 infer_time = []
                 while not done and steps < self.maxSteps:
@@ -233,7 +230,7 @@ class AgentDDPG:
             print(save_str)
                 
         else:
-            print("Correct usage: python train.py {name} (play | train) [-cs]")
+            print("Model not load")
 
     def _load(self):
         # Check if checkpoint file exists
