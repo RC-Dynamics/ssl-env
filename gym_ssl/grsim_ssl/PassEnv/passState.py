@@ -19,7 +19,9 @@ class passState:
   ally_y: float = None
   ally_sin: float = None
   ally_cos: float = None
+  angle_ra: float = None
   dist_ab: float = None
+
   real_ball_vx: float = None
   real_ball_vy: float = None
   timestamp: float = None
@@ -39,9 +41,14 @@ class passState:
     return math.sin(angle_left), math.cos(angle_left)
 
   def getAllyAngle(self, frame):
-    dist_left = [frame.robotsBlue[0].x - frame.robotsYellow[0].x, frame.robotsBlue[0].y - (frame.robotsYellow[0].y - ROBOT_RADIUS)]
+    dist_left = [frame.robotsBlue[0].x - frame.robotsYellow[0].x, frame.robotsBlue[0].y - frame.robotsYellow[0].y]
     angle_left = toPiRange(angle(dist_left[0], dist_left[1]) + (math.pi - frame.robotsBlue[0].theta))
-    return math.sin(angle_left), math.cos(angle_left)
+    return angle_left #rad
+
+  def getRobotBallAngle(self, frame):
+    dist_left = [frame.robotsBlue[0].x - frame.ball.x, frame.robotsBlue[0].y - frame.ball.y]
+    angle_left = toPiRange(angle(dist_left[0], dist_left[1]) + (math.pi - frame.robotsBlue[0].theta))
+    return angle_left #rad
 
   
   def getBallLocalCoordinates(self, frame):
@@ -78,7 +85,8 @@ class passState:
     self.real_ball_vx, self.real_ball_vy = frame.ball.vx, frame.ball.vy
 
     self.ally_x, self.ally_y = self.getAllyLocalCoordinates(frame)
-    self.ally_sin, self.ally_cos = self.getAllyAngle(frame)
+    self.angle_ra = self.getAllyAngle(frame)
+    self.angle_rb = self.getRobotBallAngle(frame)
     
     self.dist_ra = self.getRobotsDistance(frame)
     self.dist_rb  = self.getRobotBallDistance(frame)
@@ -87,15 +95,15 @@ class passState:
     
     observation = []
 
-    observation.append(self.ball_x) 
-    observation.append(self.ballY) 
-    observation.append(self.ball_vx) 
-    observation.append(self.ball_vy)
+    #observation.append(self.ball_x) 
+    #observation.append(self.ballY) 
+    #observation.append(self.ball_vx) 
+    #observation.append(self.ball_vy)
     
     observation.append(self.ally_x)
     observation.append(self.ally_y)
-    observation.append(self.ally_sin)
-    observation.append(self.ally_cos)
+    observation.append(self.angle_ra)
+    observation.append(self.angle_rb)
     observation.append(self.dist_ab)
     observation.append(self.robot_vw)
 

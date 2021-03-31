@@ -26,16 +26,15 @@ class goalieEnv(GrSimSSLEnv):
         1       Rel Ball Y   (mm)                               -6000                   6000
         2       Ball Vx  (mm/s)                                 -10000                  10000
         3       Ball Vy  (mm/s)                                 -10000                  10000
-        4       Blue id 0 X  (mm)                               -7000                   7000
-        5       Blue id 0 Y  (mm)                               -6000                   6000
-        6       Blue id 0 Vx  (mm/s)                            -10000                  10000
-        7       Blue id 0 Vy  (mm/s)                            -10000                  10000
-        8       Blue id 0 Robot Vw       (rad/s)                -math.pi * 3            math.pi * 3
-        9       Dist Blue id0 - ball (mm)                       -10000                  10000
-        10      Angular Dist Blue id0 - ball (mm)               -math.pi                -math.pi
-        11      Dist X Blue id0 - goal centerX (mm)             -7000                   7000
-        12      Dist Y Blue id0 - goal left (mm)                -6000                   6000 
-        13      Dist Y Blue id0 - goal right (mm)               -6000                   6000 
+        4       Blue id 0 Vx  (mm/s)                            -10000                  10000
+        5       Blue id 0 Vy  (mm/s)                            -10000                  10000
+        6       Blue id 0 Robot Theta    (rad)                  -math.pi                math.pi 
+        7       Blue id 0 Robot Vw       (rad/s)                -math.pi * 3            math.pi * 3
+        8       Dist Blue id0 - ball (mm)                       -5000                   5000
+        9       Angular Dist Blue id0 - ball (mm)               -math.pi                math.pi
+        10      Dist X Blue id0 - goal centerX (mm)             -2000                   2000
+        11      Dist Y Blue id0 - goal left (mm)                -2000                   2000 
+        12      Dist Y Blue id0 - goal right (mm)               -2000                   2000 
     
     Actions:
         Type: Box(3)
@@ -56,20 +55,25 @@ class goalieEnv(GrSimSSLEnv):
     Episode Termination:
     # TODO
     """
-    def __init__(self):
+    def __init__(self, rot_goalie=False):
         super().__init__()
         ## Action Space
-        actSpaceThresholds = np.array([4, 4, math.pi * 2], dtype=np.float32)
+        self.rot_goalie = rot_goalie
+        actSpaceThresholds = np.array([1, 1, math.pi], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=-actSpaceThresholds, high=actSpaceThresholds)
 
         # Observation Space thresholds
-        obsSpaceThresholds = np.array([7000, 6000, 10000, 10000, 7000, 6000, 10000, 10000, math.pi * 3, 
-                                       10000, -math.pi, 7000, 6000 , 6000], dtype=np.float32)
+        obsSpaceThresholds = np.array([7000, 6000, 10000, 10000,
+                                       10000, 10000, math.pi, math.pi * 3, 
+                                       5000, math.pi, 2000, 2000 , 2000], dtype=np.float32)
         
         self.observation_space = gym.spaces.Box(low=-obsSpaceThresholds, high=obsSpaceThresholds)
         self.goalieState = None
         self.target_bally = 0
         self.start = time.time()
+        self.good_reward = [1, 1.5]
+        self.start_angle = 90 if self.rot_goalie else 0
+        print(self.rot_goalie, self.start_angle)
 
         print('Environment initialized')
 
@@ -97,7 +101,7 @@ class goalieEnv(GrSimSSLEnv):
 
     def reset(self):
         # Remove ball from Robot
-        self.client.sendCommandsPacket([Robot(yellow=False, id = 0, kickVx=0), Robot(yellow=True, id = 0, kickVx=3)]) 
+        self.client.sendCommandsPacket([Robot(yellow=False, id = 0, kickVx=0, theta=self.start_angle), Robot(yellow=True, id = 0, kickVx=3)]) 
         self.client.receiveState()
         self.start = time.time()
         
@@ -109,7 +113,7 @@ class goalieEnv(GrSimSSLEnv):
         robot_theta = random.randrange(0, 359, 5)
         
         target_bally = np.random.uniform(-0.59, 0.59)/10
-        ball_kp    = np.random.uniform(5.0, 7.0)
+        ball_kp    = np.random.uniform(4.0, 6.0)
         
         ball_theta = np.random.uniform(-np.pi/2*0.9, np.pi/2*0.9)
         ball_d     = np.random.uniform(1.2, 5)
@@ -132,7 +136,7 @@ class goalieEnv(GrSimSSLEnv):
         
         # Goalkeeper position
         goalkeeper_y = random.randrange(-5, 5, 1)/10
-        goalKeeper = Robot(id=0, x=-6, y=goalkeeper_y, theta=0, yellow = False)
+        goalKeeper = Robot(id=0, x=-6, y=goalkeeper_y, theta=self.start_angle, yellow = False)
         # Kicker position
         attacker = Robot(id=0, x=0, y=0, theta=robot_theta, yellow=True)
 

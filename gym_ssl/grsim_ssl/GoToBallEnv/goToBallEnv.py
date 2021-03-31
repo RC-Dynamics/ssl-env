@@ -44,7 +44,12 @@ class goToBallEnv(GrSimSSLEnv):
       1       Blue id 0 Vy                  -10                      10
       2       Blue id 0 Vw (rad/s)        -math.pi * 3            math.pi * 3
   Reward:
-      Reward is 1 for success, -1 to fails. 0 otherwise.
+      ? Reward is 1 for success, -1 to fails. 0 otherwise.
+      
+      reward      = rewardContact + rewardDistance + rewardAngle 
+      |- Contact  = 100 if self.goToBallState.distance <= 130 and abs(self.goToBallState.angle_relative)<0.5
+      |- Distance = 2 * math.exp(-((self.goToBallState.distance*0.001)**2
+      |- Angle    = self.goToBallState.angle_relative**2) / 2) - 2
 
   Starting State:
       All observations are assigned a uniform random value in [-0.05..0.05]
@@ -122,6 +127,7 @@ class goToBallEnv(GrSimSSLEnv):
       dt =1
 
     rewardDistance += (5 / pow(2 * math.pi, 1 / 2)) * math.exp(-((self.goToBallState.distance*0.001)**2 + self.goToBallState.angle_relative**2) / 2) - 2
+    ## Note: (5 / pow(2 * math.pi, 1 / 2)) ~= 2
     #rewardDistance -= (0.1*(self.goToBallState.distance - self.distAnt))/dt
     #rewardAngle -=(0.02*(self.goToBallState.angle_relative - self.angleAnt))/dt
 

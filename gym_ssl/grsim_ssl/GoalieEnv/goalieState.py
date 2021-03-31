@@ -104,23 +104,22 @@ class goalieState:
 
     def getObservation(self, frame):
         """
-        Observation:
+    Observation:
         Type: Box(13)
         Num     Observation                                       Min                     Max
-        0       Ball X   (mm)                                   -7000                   7000
-        1       Ball Y   (mm)                                   -6000                   6000
+        0       Rel Ball X   (mm)                               -7000                   7000
+        1       Rel Ball Y   (mm)                               -6000                   6000
         2       Ball Vx  (mm/s)                                 -10000                  10000
         3       Ball Vy  (mm/s)                                 -10000                  10000
-        4       Blue id 0 X  (mm)                               -7000                   7000
-        5       Blue id 0 Y  (mm)                               -6000                   6000
         6       Blue id 0 Vx  (mm/s)                            -10000                  10000
         7       Blue id 0 Vy  (mm/s)                            -10000                  10000
-        8       Blue id 0 Robot Vw       (rad/s)                -math.pi * 3            math.pi * 3
-        9       Dist Blue id0 - ball (mm)                       -10000                  10000
-        10      Angular Dist Blue id0 - ball (mm)               -math.pi                -math.pi
-        11      Dist X Blue id0 - goal centerX (mm)             -7000                   7000
-        12      Dist Y Blue id0 - goal left (mm)                -6000                   6000 
-        13      Dist Y Blue id0 - goal right (mm)               -6000                   6000 
+        8       Blue id 0 Robot Theta    (rad)                  -math.pi                math.pi 
+        9       Blue id 0 Robot Vw       (rad/s)                -math.pi * 3            math.pi * 3
+        10      Dist Blue id0 - ball (mm)                       -5000                   5000
+        11      Angular Dist Blue id0 - ball (mm)               -math.pi                math.pi
+        12      Dist X Blue id0 - goal centerX (mm)             -2000                   2000
+        13      Dist Y Blue id0 - goal left (mm)                -2000                   2000 
+        14      Dist Y Blue id0 - goal right (mm)               -2000                   2000
         """
 
         self.ball_x, self.ballY = self.getBallLocalCoordinates(frame)
@@ -144,17 +143,16 @@ class goalieState:
         observation.append(self.ball_vx) #2 
         observation.append(self.ball_vy) #3
         
-        observation.append(frame.robotsBlue[0].x )  #4
-        observation.append(frame.robotsBlue[0].y )  #5
         observation.append(frame.robotsBlue[0].vx ) #6
         observation.append(frame.robotsBlue[0].vy ) #7
-        observation.append(self.robot_w)            #8
+        observation.append(frame.robotsBlue[0].theta) #8
+        observation.append(frame.robotsBlue[0].vw)  #9     
         
-        observation.append(self.robot_ball_dist)    #9
-        observation.append(self.angle_relative)     #10
+        observation.append(self.robot_ball_dist)    #10
+        observation.append(self.angle_relative)     #11
         
-        observation.append(xdist_goal)  #11
-        observation.append(ydistl_goal) #12
-        observation.append(ydistr_goal)  #13
+        observation.append(xdist_goal)  #12
+        observation.append(ydistl_goal) #13
+        observation.append(ydistr_goal)  #14
 
         return observation

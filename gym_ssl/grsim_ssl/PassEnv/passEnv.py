@@ -22,17 +22,12 @@ class passEnv(GrSimSSLEnv):
   Observation:
     Type: Box(16)
     Num     Observation                                       Min                     Max
-    0       R Ball X   (mm)                                   -7000                   7000
-    1       R Ball Y   (mm)                                   -6000                   6000
-    2       R Ball Vx  (mm/s)                                 -10000                  10000
-    3       R Ball Vy  (mm/s)                                 -10000                  10000
-    4       R Ally X   (mm)                                   -7000                   7000
-    5       R Ally Y   (mm)                                   -6000                   6000
-    6       R Ally Sin (rad)                                  -math.pi                math.pi
-    7       R Ally Cos (rad)                                  -math.pi                math.pi
-    8       R Dist Ally ball (mm)                             -7000                   7000
-    9       Blue id 0 Robot Vw       (rad/s)                  -math.pi * 3            math.pi * 3
-
+    1       Ally X   (mm)                                   -7000                   7000
+    2       Ally Y   (mm)                                   -6000                   6000
+    3       Robot Ally angle (rad)                          -math.pi                math.pi
+    4       Robot Ball angle (rad)                          -math.pi                math.pi
+    7       R Dist Ally ball (mm)                           -7000                   7000
+    8       Blue id 0 Robot Vw (rad/s)                      -math.pi * 3            math.pi * 3
     
   Actions:
     Type: Box(2)
@@ -53,12 +48,11 @@ class passEnv(GrSimSSLEnv):
     super().__init__()
     ## Action Space
     
-    actSpaceThresholds = np.array([math.pi * 3, 6.5], dtype=np.float32)
+    actSpaceThresholds = np.array([math.pi * 2.5, 6.5], dtype=np.float32)
     self.action_space  = gym.spaces.Box(low=-actSpaceThresholds, high=actSpaceThresholds)
 
     # Observation Space thresholds
-    obsSpaceThresholds = np.array([7000, 6000, 10000, 10000,
-                                   7000, 6000, math.pi, 7000,math.pi,
+    obsSpaceThresholds = np.array([7000, 6000, math.pi, math.pi, 7000,
                                    math.pi * 3], dtype=np.float32)
 
     self.observation_space = gym.spaces.Box(low=-obsSpaceThresholds, high=obsSpaceThresholds)

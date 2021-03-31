@@ -95,7 +95,7 @@ class goToBallState:
     robot_ball_x = mod_to_ball* math.cos(angle_to_ball)
     robot_ball_y = mod_to_ball* math.sin(angle_to_ball)
     return robot_ball_x, robot_ball_y
-  
+
   def getBallLocalSpeed(self, frame):
     robot_ball = [frame.robotsBlue[0].vx - frame.ball.vx, frame.robotsBlue[0].vy - frame.ball.vy]
     mod_to_ball = mod(robot_ball[0], robot_ball[1])
